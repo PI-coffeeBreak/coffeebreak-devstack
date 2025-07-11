@@ -1,0 +1,9 @@
+fileignoreconfig:
+- filename: core
+  checksum: 2e70cbdc020471be90e66a4dad7ed820507dfe3ca5c578f7bd437f2e61ff56ca
+- filename: event-app
+  checksum: a16c8de5d7718fc62f20be61401a94b3e3155de464e36d6d426e31e8379bd162
+- filename: frontend
+  checksum: faab62836a2dd28568ad065209462c018ebf4763188196392a14bc1a0e476b13
+threshold: medium
+version: "1.0"

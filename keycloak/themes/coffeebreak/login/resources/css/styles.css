@@ -1,0 +1,155 @@
+/* Import Tailwind if you want to use it */
+@import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+
+.login-pf-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+}
+
+.card-pf {
+    width: 40%;
+    border-radius: 0.75rem;
+    background-color: var(--secondary);
+    height: 60%;
+    z-index: 10;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 2rem;
+}
+
+.login-pf-header {
+    margin-bottom: 2rem;
+}
+
+.login-pf-header h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.form-container {
+    background-color: var(--base-200);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-control {
+    padding: 1rem;
+    width: 100%;
+    height: 4rem;
+    border-radius: 0.75rem;
+    background-color: var(--base-200);
+    margin-top: 1rem;
+}
+
+.btn-primary {
+    width: 66.666667%;
+    height: 2.5rem;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 0.75rem;
+    margin-top: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.login-pf-signup {
+    margin-top: 1rem;
+}
+
+.login-pf-signup a {
+    color: var(--primary);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.login-pf-signup a:hover {
+    text-decoration: underline;
+}
+
+/* Registration page specific styles */
+.register-pf-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+}
+
+.register-pf-page .card-pf {
+    width: 50%;
+    max-width: 600px;
+    min-height: 70%;
+    padding: 3rem;
+    background-color: var(--secondary);
+}
+
+.register-pf-page .form-container {
+    background-color: var(--base-200);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+}
+
+.register-pf-page .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.register-pf-page .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.register-pf-page .form-control {
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.register-pf-page .form-control:focus {
+    background-color: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 43, 29, 0.1);
+}
+
+.register-pf-page .btn-primary {
+    width: 100%;
+    height: 3rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.register-pf-page .alert {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #fff5f5;
+    color: #c53030;
+    border: 1px solid #fed7d7;
+}
+
+/* Custom variables to match your theme */
+:root {
+    --primary: #4F2B1D;
+    --secondary: #c6baa2;
+    --base-200: #d6d6d3;
+} 

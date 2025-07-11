@@ -1,0 +1,311 @@
+services:
+  core:
+    restart: unless-stopped
+    build:
+      context: core
+      dockerfile: Dockerfile
+    command: ["./cb.sh", "dev", "--workers=1", "--host=0.0.0.0", "--port=8000"]
+    networks:
+      - coffeebreak
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT}
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=coffeebreak
+      - KEYCLOAK_CLIENT_ID=fastapi-client
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - ANON_JWT_SECRET=${ANON_JWT_SECRET}
+      - DATABASE_URI=${DATABASE_URI}
+      - MONGODB_URI=${MONGODB_URI}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_HOST=mq
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+    depends_on:
+      database:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./plugins:/app/plugins
+      - media_data:/app/media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 3s
+    develop:
+      watch:
+        - action: sync
+          path: ./core
+          target: /app
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+            - .git/
+            - .pytest_cache/
+            - .coverage
+        - action: sync+restart
+          path: ./core/requirements.txt
+          target: /app/requirements.txt
+        - action: sync
+          path: ./plugins
+          target: /app/plugins
+
+  event-app:
+    restart: unless-stopped
+    build:
+      context: event-app
+      dockerfile: Dockerfile
+    networks:
+      - coffeebreak
+    environment:
+      - API_BASE_URL=${API_BASE_URL}
+      - WS_URL=${WS_URL}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+    ports:
+      - "5175:80"
+    develop:
+      watch:
+        - action: sync
+          path: ./event-app/src
+          target: /app/src
+        - action: sync
+          path: ./event-app/public
+          target: /app/public
+        - action: sync+restart
+          path: ./event-app/package.json
+          target: /app/package.json
+        - action: sync+restart
+          path: ./event-app/vite.config.js
+          target: /app/vite.config.js
+    
+  frontend:
+    restart: unless-stopped
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    networks:
+      - coffeebreak
+    environment:
+      - API_BASE_URL=${API_BASE_URL}
+      - WS_URL=${WS_URL}
+      - KEYCLOAK_URL=${KC_HOSTNAME}
+      - KEYCLOAK_REALM=coffeebreak
+      - KEYCLOAK_CLIENT_ID=coffeebreak-client
+    ports:
+      - "5173:80"
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: sync
+          path: ./frontend/public
+          target: /app/public
+        - action: sync+restart
+          path: ./frontend/package.json
+          target: /app/package.json
+        - action: sync+restart
+          path: ./frontend/vite.config.js
+          target: /app/vite.config.js
+
+  database:
+    restart: unless-stopped
+    image: postgres:17.4-alpine3.21
+    networks:
+      - coffeebreak
+    environment:
+      - POSTGRES_DB=coffeebreak
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d coffeebreak"]
+      interval: 10s
+      timeout: 20s
+      retries: 6
+      start_period: 3s
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    restart: unless-stopped
+    image: dpage/pgadmin4
+    networks:
+      - coffeebreak
+    ports:
+      - 15433:80
+    environment:
+      - PGADMIN_LISTEN_PORT=80
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin/
+
+  mongodb:
+    restart: unless-stopped
+    image: mongo:8.0.5
+    networks:
+      - coffeebreak
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"]
+      interval: 10s
+      timeout: 10s
+      retries: 8
+      start_period: 5s
+    ports:
+      - "27017:27017"
+
+  keycloak:
+    restart: unless-stopped
+    build:
+      context: keycloak
+      dockerfile: Dockerfile
+    container_name: keycloak
+    networks:
+      - coffeebreak
+    environment:
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
+      - KC_DB_USERNAME=${KC_DB_USERNAME}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+      - KC_HOSTNAME=${KC_HOSTNAME}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - PROXY_ADDRESS_FORWARDING=${PROXY_ADDRESS_FORWARDING:-false}
+      - KEYCLOAK_LOGLEVEL=DEBUG
+    ports:
+      - "8443:8443"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8443 || exit 1"]
+      interval: 6s
+      timeout: 10s
+      retries: 5
+      start_period: 8s
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    volumes:
+      - ./keycloak/providers:/opt/keycloak/providers:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
+      - ./keycloak/exports:/opt/keycloak/data/import:ro
+
+  nginx:
+    restart: unless-stopped
+    image: nginx:1.27.4-alpine3.21
+    container_name: nginx
+    networks:
+      - coffeebreak
+    ports:
+      - "80:80"
+      - "3001:3001"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      keycloak:
+        condition: service_started
+      core:
+        condition: service_started
+      frontend:
+        condition: service_started
+      event-app:
+        condition: service_started
+
+  keycloak-db:
+    restart: unless-stopped
+    image: postgres:17.4-alpine3.21
+    container_name: keycloak-db
+    networks:
+      - coffeebreak
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: ${KC_DB_USERNAME}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USERNAME} -d keycloak"]
+      interval: 5s
+      timeout: 60s
+      retries: 8
+      start_period: 5s
+
+  mq:
+    restart: unless-stopped
+    image: rabbitmq:4.0.8-management-alpine
+    container_name: mq
+    networks:
+      - coffeebreak
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmqctl status"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 3s
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Only needed if webpush-notifications plugin is used
+  webpush-sender:
+    restart: unless-stopped
+    build:
+      context: webpush-sender
+      dockerfile: Dockerfile
+    networks:
+      - coffeebreak
+    environment:
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://mq:5672}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=database
+      - POSTGRES_DB=coffeebreak
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+    depends_on:
+      mq:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./webpush-sender
+          target: /app
+          ignore:
+            - node_modules/
+            - .git/
+            - "*.log"
+        - action: sync+restart
+          path: ./webpush-sender/package.json
+          target: /app/package.json
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  mongodb_data:
+  keycloak_data:
+  rabbitmq_data:
+  media_data:
+
+networks:
+  coffeebreak:
+    driver: bridge
