@@ -22,7 +22,7 @@ A complete Docker Compose development environment for the CoffeeBreak platform. 
 
 4. **Configure Keycloak client secret:**
    - Access Keycloak admin console at http://localhost/auth
-   - Login with admin credentials (check your .env file)
+   - Login with admin credentials (default: username `admin`, password `admin` - or check your .env file if changed)
    - Navigate to: Realms → coffeebreak → Clients → fastapi-client → Credentials
    - Copy the "Client Secret" value
    - Add it to your `.env` file:
