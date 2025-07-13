@@ -263,40 +263,45 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
-  # Only needed if webpush-notifications plugin is used
-  webpush-sender:
-    restart: unless-stopped
-    build:
-      context: webpush-sender
-      dockerfile: Dockerfile
-    networks:
-      - coffeebreak
-    environment:
-      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
-      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
-      - RABBITMQ_URL=${RABBITMQ_URL:-amqp://mq:5672}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_HOST=database
-      - POSTGRES_DB=coffeebreak
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-    depends_on:
-      mq:
-        condition: service_healthy
-      database:
-        condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./webpush-sender
-          target: /app
-          ignore:
-            - node_modules/
-            - .git/
-            - "*.log"
-        - action: sync+restart
-          path: ./webpush-sender/package.json
-          target: /app/package.json
+  # Webpush-sender service - UNCOMMENT if using webpush-notifications plugin
+  # Note: This service is not included in the base devstack. You'll need to:
+  # 1. Clone the webpush-sender repository into this directory
+  # 2. Uncomment the service configuration below
+  # 3. Ensure VAPID keys are generated and added to your .env file
+  #
+  # webpush-sender:
+  #   restart: unless-stopped
+  #   build:
+  #     context: webpush-sender
+  #     dockerfile: Dockerfile
+  #   networks:
+  #     - coffeebreak
+  #   environment:
+  #     - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+  #     - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+  #     - RABBITMQ_URL=${RABBITMQ_URL:-amqp://mq:5672}
+  #     - POSTGRES_USER=${POSTGRES_USER}
+  #     - POSTGRES_HOST=database
+  #     - POSTGRES_DB=coffeebreak
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+  #   depends_on:
+  #     mq:
+  #       condition: service_healthy
+  #     database:
+  #       condition: service_healthy
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./webpush-sender
+  #         target: /app
+  #         ignore:
+  #           - node_modules/
+  #           - .git/
+  #           - "*.log"
+  #       - action: sync+restart
+  #         path: ./webpush-sender/package.json
+  #         target: /app/package.json
 
 volumes:
   postgres_data:
