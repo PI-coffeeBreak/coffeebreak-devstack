@@ -1,6 +1,7 @@
 services:
   core:
     restart: unless-stopped
+    container_name: coffeebreak-core
     build:
       context: core
       dockerfile: Dockerfile
@@ -59,6 +60,7 @@ services:
 
   event-app:
     restart: unless-stopped
+    container_name: coffeebreak-event-app
     build:
       context: event-app
       dockerfile: Dockerfile
@@ -87,6 +89,7 @@ services:
     
   frontend:
     restart: unless-stopped
+    container_name: coffeebreak-frontend
     build:
       context: frontend
       dockerfile: Dockerfile
@@ -117,6 +120,7 @@ services:
 
   database:
     restart: unless-stopped
+    container_name: coffeebreak-database
     image: postgres:17.4-alpine3.21
     networks:
       - coffeebreak
@@ -137,6 +141,7 @@ services:
 
   pgadmin:
     restart: unless-stopped
+    container_name: coffeebreak-pgadmin
     image: dpage/pgadmin4
     networks:
       - coffeebreak
@@ -154,6 +159,7 @@ services:
 
   mongodb:
     restart: unless-stopped
+    container_name: coffeebreak-mongodb
     image: mongo:8.0.5
     networks:
       - coffeebreak
@@ -176,7 +182,7 @@ services:
     build:
       context: keycloak
       dockerfile: Dockerfile
-    container_name: keycloak
+    container_name: coffeebreak-keycloak
     networks:
       - coffeebreak
     environment:
@@ -208,7 +214,7 @@ services:
   nginx:
     restart: unless-stopped
     image: nginx:1.27.4-alpine3.21
-    container_name: nginx
+    container_name: coffeebreak-nginx
     networks:
       - coffeebreak
     ports:
@@ -229,7 +235,7 @@ services:
   keycloak-db:
     restart: unless-stopped
     image: postgres:17.4-alpine3.21
-    container_name: keycloak-db
+    container_name: coffeebreak-keycloak-db
     networks:
       - coffeebreak
     environment:
@@ -248,7 +254,7 @@ services:
   mq:
     restart: unless-stopped
     image: rabbitmq:4.0.8-management-alpine
-    container_name: mq
+    container_name: coffeebreak-mq
     networks:
       - coffeebreak
     environment:
